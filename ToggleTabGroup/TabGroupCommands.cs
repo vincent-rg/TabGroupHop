@@ -98,10 +98,10 @@ namespace ToggleTabGroup
 
             object nextGroup = location.Groups[(location.Index + 1) % location.Groups.Count];
             object tab = DocumentGroupLocation.GetActiveTab(nextGroup);
-            IVsWindowFrame target = FindDocumentFrame(tab);
+            IVsWindowFrame target = FindFrame(tab);
             if (target == null)
             {
-                SetStatusBarText("Toggle Tab Group: no document found in the next group.");
+                SetStatusBarText("Toggle Tab Group: no window found for the next group's tab.");
                 return;
             }
 
@@ -116,7 +116,7 @@ namespace ToggleTabGroup
             string details = null;
             try
             {
-                var frame = GetActiveDocumentFrame();
+                var frame = GetActiveTabFrame();
                 if (frame == null)
                 {
                     message = "No active document.";
@@ -148,7 +148,7 @@ namespace ToggleTabGroup
             ThreadHelper.ThrowIfNotOnUIThread();
 
             location = null;
-            frame = GetActiveDocumentFrame();
+            frame = GetActiveTabFrame();
             if (frame == null)
                 return false;
 
@@ -167,9 +167,12 @@ namespace ToggleTabGroup
         }
 
         /// <summary>
-        /// The active document frame, even when focus is in a tool window or a menu.
+        /// The frame of the active tab in the document well:
+        /// the active window if it is hosted in a tab group (a document, or a tool window
+        /// docked as a tab, like Test Explorer), otherwise the last active document
+        /// (e.g. when focus is in Solution Explorer).
         /// </summary>
-        private static IVsWindowFrame GetActiveDocumentFrame()
+        private static IVsWindowFrame GetActiveTabFrame()
         {
             ThreadHelper.ThrowIfNotOnUIThread();
 
@@ -177,19 +180,39 @@ namespace ToggleTabGroup
             if (monitorSelection == null)
                 return null;
 
-            monitorSelection.GetCurrentElementValue((uint)VSConstants.VSSELELEMID.SEID_DocumentFrame, out object value);
-            return value as IVsWindowFrame;
+            monitorSelection.GetCurrentElementValue((uint)VSConstants.VSSELELEMID.SEID_WindowFrame, out object window);
+            if (window is IVsWindowFrame windowFrame && DocumentGroupLocation.Find(windowFrame) != null)
+                return windowFrame;
+
+            monitorSelection.GetCurrentElementValue((uint)VSConstants.VSSELELEMID.SEID_DocumentFrame, out object document);
+            return document as IVsWindowFrame;
         }
 
-        /// <summary>The document frame whose FrameView is the given View.</summary>
-        private static IVsWindowFrame FindDocumentFrame(object view)
+        /// <summary>The frame (document or tool window) whose FrameView is the given View.</summary>
+        private static IVsWindowFrame FindFrame(object view)
         {
             ThreadHelper.ThrowIfNotOnUIThread();
 
             if (view == null || !(Package.GetGlobalService(typeof(SVsUIShell)) is IVsUIShell shell))
                 return null;
 
-            if (ErrorHandler.Failed(shell.GetDocumentWindowEnum(out IEnumWindowFrames frames)) || frames == null)
+            if (ErrorHandler.Succeeded(shell.GetDocumentWindowEnum(out IEnumWindowFrames documents))
+                && FindFrame(documents, view) is IVsWindowFrame document)
+            {
+                return document;
+            }
+
+            if (ErrorHandler.Succeeded(shell.GetToolWindowEnum(out IEnumWindowFrames toolWindows)))
+                return FindFrame(toolWindows, view);
+
+            return null;
+        }
+
+        private static IVsWindowFrame FindFrame(IEnumWindowFrames frames, object view)
+        {
+            ThreadHelper.ThrowIfNotOnUIThread();
+
+            if (frames == null)
                 return null;
 
             var buffer = new IVsWindowFrame[1];
