@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<CommandTable xmlns="http://schemas.microsoft.com/VisualStudio/2005-10-18/CommandTable" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <Extern href="stdidcmd.h" />
+  <Extern href="vsshlids.h" />
+
+  <Commands package="guidToggleTabGroupPackage">
+    <Groups>
+      <!-- Our own group inside the "Window" main menu. -->
+      <Group guid="guidToggleTabGroupCmdSet" id="ToggleTabGroupMenuGroup" priority="0x0600">
+        <Parent guid="guidSHLMainMenu" id="IDM_VS_MENU_WINDOW" />
+      </Group>
+    </Groups>
+
+    <!-- Canonical names give the keyboard-binding names: TabGroup.MoveToNext, TabGroup.FocusNext, ... -->
+    <Buttons>
+      <Button guid="guidToggleTabGroupCmdSet" id="MoveToNextCommandId" priority="0x0100" type="Button">
+        <Parent guid="guidToggleTabGroupCmdSet" id="ToggleTabGroupMenuGroup" />
+        <Strings>
+          <ButtonText>Move to Next Tab Group (wrap)</ButtonText>
+          <CanonicalName>.TabGroup.MoveToNext</CanonicalName>
+          <LocCanonicalName>.TabGroup.MoveToNext</LocCanonicalName>
+        </Strings>
+      </Button>
+
+      <Button guid="guidToggleTabGroupCmdSet" id="FocusNextCommandId" priority="0x0101" type="Button">
+        <Parent guid="guidToggleTabGroupCmdSet" id="ToggleTabGroupMenuGroup" />
+        <Strings>
+          <ButtonText>Focus Next Tab Group (wrap)</ButtonText>
+          <CanonicalName>.TabGroup.FocusNext</CanonicalName>
+          <LocCanonicalName>.TabGroup.FocusNext</LocCanonicalName>
+        </Strings>
+      </Button>
+
+      <Button guid="guidToggleTabGroupCmdSet" id="DiagnosticsCommandId" priority="0x0102" type="Button">
+        <Parent guid="guidToggleTabGroupCmdSet" id="ToggleTabGroupMenuGroup" />
+        <Strings>
+          <ButtonText>Tab Group Diagnostics</ButtonText>
+          <CanonicalName>.TabGroup.Diagnostics</CanonicalName>
+          <LocCanonicalName>.TabGroup.Diagnostics</LocCanonicalName>
+        </Strings>
+      </Button>
+    </Buttons>
+  </Commands>
+
+  <Symbols>
+    <GuidSymbol name="guidToggleTabGroupPackage" value="{dfd18762-e92a-4c5c-9443-8a0264f3c867}" />
+
+    <GuidSymbol name="guidToggleTabGroupCmdSet" value="{188b3ead-ccd9-43c0-bd7d-a337cd2ad2ed}">
+      <IDSymbol name="ToggleTabGroupMenuGroup" value="0x1020" />
+      <IDSymbol name="MoveToNextCommandId" value="0x0100" />
+      <IDSymbol name="FocusNextCommandId" value="0x0101" />
+      <IDSymbol name="DiagnosticsCommandId" value="0x0102" />
+    </GuidSymbol>
+  </Symbols>
+</CommandTable>
