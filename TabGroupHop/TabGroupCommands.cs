@@ -66,15 +66,23 @@ namespace TabGroupHop
                 if (!ok)
                     SetStatusBarText("Tab Group Hop: a new group needs at least two documents in the current group.");
             }
+            else if (ViewModel.TryDockInto(location.Groups[(location.Index + 1) % location.Groups.Count], location.View))
+            {
+                // Dock the tab straight into the next group (first position in its tab strip),
+                // wrapping from the last group to the first without crossing the groups in between.
+                ok = true;
+                Tracer.LogState("DockOperations.Dock into next group", frame);
+            }
             else if (location.Index < location.Groups.Count - 1)
             {
+                // Fallback: native command (no wrap).
                 ok = VsCommandRunner.TryExecute(VsCommandRunner.MoveToNextTabGroup);
                 Tracer.LogState($"MoveToNextTabGroup ok={ok}", frame);
             }
             else
             {
-                // Last group: wrap around by moving back step by step to the first group
-                // (the native command doesn't wrap). Groups emptied on the way are removed by VS.
+                // Fallback for the last group: move back step by step to the first group.
+                // Groups emptied on the way are removed by VS.
                 ok = true;
                 for (int guard = location.Groups.Count; ok && guard > 0; guard--)
                 {

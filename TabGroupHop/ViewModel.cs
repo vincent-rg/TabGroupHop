@@ -29,19 +29,64 @@ namespace TabGroupHop
             return node;
         }
 
-        public static bool IsOfType(object obj, string typeName)
-        {
-            for (Type t = obj?.GetType(); t != null; t = t.BaseType)
-            {
-                if (t.Name == typeName)
-                    return true;
-            }
-            return false;
-        }
+        public static bool IsOfType(object obj, string typeName) => FindBaseType(obj, typeName) != null;
 
         public static IEnumerable<object> Enumerate(object collection)
         {
             return collection is IEnumerable enumerable ? enumerable.Cast<object>() : Enumerable.Empty<object>();
+        }
+
+        /// <summary>
+        /// Moves a view into a document group as a new tab, as when dropping a tab in the middle
+        /// of a group: DockOperations.Dock(target, view, DockDirection.Fill) (public, but undocumented).
+        /// Returns false if the API is not found or throws.
+        /// </summary>
+        public static bool TryDockInto(object targetGroup, object view)
+        {
+            ThreadHelper.ThrowIfNotOnUIThread();
+
+            Type viewElement = FindBaseType(view, "ViewElement");
+            Assembly viewManager = viewElement?.Assembly;
+            Type dockOperations = viewManager?.GetType("Microsoft.VisualStudio.PlatformUI.Shell.DockOperations");
+            Type dockDirection = viewManager?.GetType("Microsoft.VisualStudio.PlatformUI.Shell.DockDirection");
+            if (dockOperations == null || dockDirection == null || targetGroup == null)
+            {
+                Tracer.Log("DockOperations.Dock not found");
+                return false;
+            }
+
+            MethodInfo dock = dockOperations.GetMethod(
+                "Dock",
+                BindingFlags.Public | BindingFlags.Static,
+                null,
+                new[] { viewElement, viewElement, dockDirection },
+                null);
+            if (dock == null)
+            {
+                Tracer.Log("DockOperations.Dock(ViewElement, ViewElement, DockDirection) not found");
+                return false;
+            }
+
+            try
+            {
+                dock.Invoke(null, new[] { targetGroup, view, Enum.Parse(dockDirection, "Fill") });
+                return true;
+            }
+            catch (TargetInvocationException ex)
+            {
+                Tracer.Log($"DockOperations.Dock failed: {ex.InnerException}");
+                return false;
+            }
+        }
+
+        private static Type FindBaseType(object obj, string typeName)
+        {
+            for (Type t = obj?.GetType(); t != null; t = t.BaseType)
+            {
+                if (t.Name == typeName)
+                    return t;
+            }
+            return null;
         }
 
         public static object GetProperty(object obj, string name)
