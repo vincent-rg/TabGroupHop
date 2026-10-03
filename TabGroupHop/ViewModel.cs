@@ -107,8 +107,15 @@ namespace TabGroupHop
             if (ViewModel.IsOfType(selected, "View") && ViewModel.IsVisible(selected))
                 return selected;
 
+            return GetVisibleTabs(group).FirstOrDefault();
+        }
+
+        /// <summary>The visible tabs of a group, in tab-strip order (hidden views are skipped).</summary>
+        public static List<object> GetVisibleTabs(object group)
+        {
             return ViewModel.Enumerate(ViewModel.GetProperty(group, "Children"))
-                .FirstOrDefault(v => ViewModel.IsOfType(v, "View") && ViewModel.IsVisible(v));
+                .Where(v => ViewModel.IsOfType(v, "View") && ViewModel.IsVisible(v))
+                .ToList();
         }
     }
 }

@@ -106,6 +106,39 @@ namespace TabGroupHop
             return sb.ToString();
         }
 
+        /// <summary>
+        /// Compact layout of all groups, one line per group (used when the trace is turned on).
+        /// </summary>
+        public static string DescribeGroups(IVsWindowFrame frame)
+        {
+            ThreadHelper.ThrowIfNotOnUIThread();
+
+            var location = frame != null ? DocumentGroupLocation.Find(frame) : null;
+            if (location == null)
+                return "No active tab in a tab group.";
+
+            object activeView = location.View;
+            var sb = new StringBuilder();
+            sb.AppendLine($"{location.Groups.Count} group(s), orientation {ViewModel.GetProperty(location.Container, "Orientation")}, " +
+                          $"in {ViewModel.GetRoot(location.Group).GetType().Name}  (* = active tab, > = selected tab of its group)");
+
+            for (int i = 0; i < location.Groups.Count; i++)
+            {
+                object group = location.Groups[i];
+                object selected = ViewModel.GetProperty(group, "SelectedElement");
+                List<object> tabs = DocumentGroupLocation.GetVisibleTabs(group);
+                int hidden = ViewModel.Enumerate(ViewModel.GetProperty(group, "Children")).Count() - tabs.Count;
+
+                IEnumerable<string> titles = tabs.Select(tab =>
+                    (ReferenceEquals(tab, activeView) ? "*" : "") +
+                    (ReferenceEquals(tab, selected) ? ">" : "") +
+                    GetTabTitle(tab));
+
+                sb.AppendLine($"   Group {i + 1} ({tabs.Count} tabs, {hidden} hidden): {string.Join(" | ", titles)}");
+            }
+            return sb.ToString().TrimEnd();
+        }
+
         private static string GetTabTitle(object tab)
         {
             string title = ViewModel.GetProperty(tab, "Title")?.ToString();

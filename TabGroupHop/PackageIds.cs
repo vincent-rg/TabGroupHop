@@ -15,5 +15,6 @@ namespace TabGroupHop
         public const int MoveToNextCommand = 0x0100;
         public const int FocusNextCommand = 0x0101;
         public const int DiagnosticsCommand = 0x0102;
+        public const int ToggleTraceCommand = 0x0105;
     }
 }

@@ -9,22 +9,28 @@ using Task = System.Threading.Tasks.Task;
 namespace TabGroupHop
 {
     /// <summary>
-    /// TabGroup.MoveToNext, TabGroup.FocusNext and TabGroup.Diagnostics.
+    /// TabGroup.MoveToNext, TabGroup.FocusNext, TabGroup.Diagnostics and TabGroup.ToggleTrace.
     /// Only document groups of the main window are handled (no floating windows).
     /// </summary>
     internal sealed class TabGroupCommands
     {
-        private static readonly Guid OutputPaneGuid = new Guid("bdf75cb3-d073-4d2f-b5bb-d9285e78b361");
-
         private readonly AsyncPackage _package;
+        private readonly FocusGuard _focusGuard = new FocusGuard();
 
-        private TabGroupCommands(AsyncPackage package, OleMenuCommandService commandService)
+        private TabGroupCommands(AsyncPackage package, OleMenuCommandService commandService, IVsUIShell7 shell)
         {
+            ThreadHelper.ThrowIfNotOnUIThread();
+
             _package = package;
+            shell?.AdviseWindowFrameEvents(_focusGuard);
 
             commandService.AddCommand(new MenuCommand(MoveToNext, new CommandID(PackageGuids.CommandSet, PackageIds.MoveToNextCommand)));
             commandService.AddCommand(new MenuCommand(FocusNext, new CommandID(PackageGuids.CommandSet, PackageIds.FocusNextCommand)));
             commandService.AddCommand(new MenuCommand(Diagnostics, new CommandID(PackageGuids.CommandSet, PackageIds.DiagnosticsCommand)));
+
+            var traceCommand = new OleMenuCommand(ToggleTrace, new CommandID(PackageGuids.CommandSet, PackageIds.ToggleTraceCommand));
+            traceCommand.BeforeQueryStatus += (s, e) => ((OleMenuCommand)s).Checked = Tracer.Enabled;
+            commandService.AddCommand(traceCommand);
         }
 
         public static async Task InitializeAsync(AsyncPackage package)
@@ -33,7 +39,8 @@ namespace TabGroupHop
 
             var commandService = (OleMenuCommandService)await package.GetServiceAsync(typeof(IMenuCommandService));
             Assumes.Present(commandService);
-            _ = new TabGroupCommands(package, commandService);
+            var shell = await package.GetServiceAsync(typeof(SVsUIShell)) as IVsUIShell7;
+            _ = new TabGroupCommands(package, commandService, shell);
         }
 
         /// <summary>
@@ -44,21 +51,27 @@ namespace TabGroupHop
         {
             ThreadHelper.ThrowIfNotOnUIThread();
 
+            Tracer.Log("=== MoveToNext ===");
+            _focusGuard.Disarm();
             if (!TryGetActiveDocument(out IVsWindowFrame frame, out DocumentGroupLocation location))
                 return;
 
+            Tracer.LogState("start", frame);
             frame.Show();
+            Tracer.LogState("after initial Show", frame);
 
             bool ok;
             if (location.Groups.Count == 1)
             {
                 ok = VsCommandRunner.TryExecute(VsCommandRunner.NewVerticalTabGroup);
+                Tracer.LogState($"NewVerticalTabGroup ok={ok}", frame);
                 if (!ok)
                     SetStatusBarText("Tab Group Hop: a new group needs at least two documents in the current group.");
             }
             else if (location.Index < location.Groups.Count - 1)
             {
                 ok = VsCommandRunner.TryExecute(VsCommandRunner.MoveToNextTabGroup);
+                Tracer.LogState($"MoveToNextTabGroup ok={ok}", frame);
             }
             else
             {
@@ -73,10 +86,14 @@ namespace TabGroupHop
 
                     frame.Show();
                     ok = VsCommandRunner.TryExecute(VsCommandRunner.MoveToPreviousTabGroup);
+                    Tracer.LogState($"MoveToPreviousTabGroup ok={ok}", frame);
                 }
             }
 
             frame.Show();
+            if (ok)
+                _focusGuard.Arm(frame);
+            Tracer.LogStateNowAndLater("after final Show", frame);
 
             if (!ok && location.Groups.Count > 1)
                 SetStatusBarText("Tab Group Hop: the document could not be moved.");
@@ -90,9 +107,12 @@ namespace TabGroupHop
         {
             ThreadHelper.ThrowIfNotOnUIThread();
 
-            if (!TryGetActiveDocument(out _, out DocumentGroupLocation location))
+            Tracer.Log("=== FocusNext ===");
+            _focusGuard.Disarm();
+            if (!TryGetActiveDocument(out IVsWindowFrame frame, out DocumentGroupLocation location))
                 return;
 
+            Tracer.LogState("start", frame);
             if (location.Groups.Count < 2)
                 return;
 
@@ -106,6 +126,13 @@ namespace TabGroupHop
             }
 
             target.Show();
+            Tracer.LogStateNowAndLater("after Show", target);
+        }
+
+        private void ToggleTrace(object sender, EventArgs e)
+        {
+            ThreadHelper.ThrowIfNotOnUIThread();
+            Tracer.SetEnabled(!Tracer.Enabled);
         }
 
         private void Diagnostics(object sender, EventArgs e)
@@ -132,7 +159,8 @@ namespace TabGroupHop
                 message = "Error while inspecting the document group:\n\n" + ex;
             }
 
-            WriteToOutputPane(message + Environment.NewLine + "--- All views (including hidden) ---" + Environment.NewLine + details);
+            OutputPane.Write($"===== {DateTime.Now:HH:mm:ss} ====={Environment.NewLine}{message}{Environment.NewLine}" +
+                             $"--- All views (including hidden) ---{Environment.NewLine}{details}", activate: true);
 
             VsShellUtilities.ShowMessageBox(
                 _package,
@@ -172,7 +200,7 @@ namespace TabGroupHop
         /// docked as a tab, like Test Explorer), otherwise the last active document
         /// (e.g. when focus is in Solution Explorer).
         /// </summary>
-        private static IVsWindowFrame GetActiveTabFrame()
+        internal static IVsWindowFrame GetActiveTabFrame()
         {
             ThreadHelper.ThrowIfNotOnUIThread();
 
@@ -230,29 +258,6 @@ namespace TabGroupHop
 
             if (Package.GetGlobalService(typeof(SVsStatusbar)) is IVsStatusbar statusBar)
                 statusBar.SetText(text);
-        }
-
-        /// <summary>
-        /// Writes to a "Tab Group Hop" pane of the Output window (copyable, unlike the message box).
-        /// </summary>
-        private static void WriteToOutputPane(string text)
-        {
-            ThreadHelper.ThrowIfNotOnUIThread();
-
-            if (!(Package.GetGlobalService(typeof(SVsOutputWindow)) is IVsOutputWindow outputWindow))
-                return;
-
-            Guid paneGuid = OutputPaneGuid;
-            if (outputWindow.GetPane(ref paneGuid, out IVsOutputWindowPane pane) != VSConstants.S_OK || pane == null)
-            {
-                outputWindow.CreatePane(ref paneGuid, "Tab Group Hop", fInitVisible: 1, fClearWithSolution: 0);
-                outputWindow.GetPane(ref paneGuid, out pane);
-            }
-            if (pane == null)
-                return;
-
-            pane.OutputStringThreadSafe($"===== {DateTime.Now:HH:mm:ss} ====={Environment.NewLine}{text}{Environment.NewLine}");
-            pane.Activate();
         }
     }
 }
