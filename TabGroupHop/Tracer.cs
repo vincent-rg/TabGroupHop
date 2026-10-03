@@ -1,6 +1,10 @@
 using System;
+using System.IO;
+using System.Linq;
 using System.Windows.Input;
 using System.Windows.Threading;
+using System.Xml;
+using System.Xml.Linq;
 using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
@@ -32,7 +36,7 @@ namespace TabGroupHop
                 _instance = new Tracer();
                 if (shell != null)
                     _eventsCookie = shell.AdviseWindowFrameEvents(_instance);
-                OutputPane.Write("----- Tab Group Hop trace ON -----", activate: true);
+                OutputPane.Write($"----- Tab Group Hop {GetExtensionVersion()} trace ON -----", activate: true);
                 OutputPane.Write(DocumentGroupInspector.DescribeGroups(TabGroupCommands.GetActiveTabFrame()), activate: false);
             }
             else
@@ -42,6 +46,24 @@ namespace TabGroupHop
                 _eventsCookie = 0;
                 _instance = null;
                 OutputPane.Write("----- Tab Group Hop trace OFF -----", activate: true);
+            }
+        }
+
+        /// <summary>
+        /// The Identity version of the installed extension.vsixmanifest, next to the assembly
+        /// (AssemblyVersion is not kept in sync with it).
+        /// </summary>
+        private static string GetExtensionVersion()
+        {
+            try
+            {
+                string manifest = Path.Combine(Path.GetDirectoryName(typeof(Tracer).Assembly.Location), "extension.vsixmanifest");
+                XElement identity = XDocument.Load(manifest).Descendants().FirstOrDefault(e => e.Name.LocalName == "Identity");
+                return "v" + (identity?.Attribute("Version")?.Value ?? "?");
+            }
+            catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is XmlException)
+            {
+                return "v?";
             }
         }
 
