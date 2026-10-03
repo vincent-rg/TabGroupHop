@@ -5,7 +5,7 @@ using Microsoft.VisualStudio.OLE.Interop;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
 
-namespace ToggleTabGroup
+namespace TabGroupHop
 {
     /// <summary>
     /// Runs a native VS command synchronously, by canonical (non-localized) name.

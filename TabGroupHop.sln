@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.12.35527.113
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ToggleTabGroup", "ToggleTabGroup\ToggleTabGroup.csproj", "{54DE3B67-A128-497D-8F9D-4EF97C2ADD31}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TabGroupHop", "TabGroupHop\TabGroupHop.csproj", "{54DE3B67-A128-497D-8F9D-4EF97C2ADD31}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

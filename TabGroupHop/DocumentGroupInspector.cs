@@ -5,7 +5,7 @@ using System.Text;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
 
-namespace ToggleTabGroup
+namespace TabGroupHop
 {
     /// <summary>
     /// Diagnostic dump of the document group hosting a frame (TabGroup.Diagnostics command).

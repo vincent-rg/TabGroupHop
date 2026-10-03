@@ -1,6 +1,6 @@
 using System;
 
-namespace ToggleTabGroup
+namespace TabGroupHop
 {
     internal static class PackageGuids
     {

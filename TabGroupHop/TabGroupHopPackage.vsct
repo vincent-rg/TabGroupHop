@@ -3,18 +3,18 @@
   <Extern href="stdidcmd.h" />
   <Extern href="vsshlids.h" />
 
-  <Commands package="guidToggleTabGroupPackage">
+  <Commands package="guidTabGroupHopPackage">
     <Groups>
       <!-- Our own group inside the "Window" main menu. -->
-      <Group guid="guidToggleTabGroupCmdSet" id="ToggleTabGroupMenuGroup" priority="0x0600">
+      <Group guid="guidTabGroupHopCmdSet" id="TabGroupHopMenuGroup" priority="0x0600">
         <Parent guid="guidSHLMainMenu" id="IDM_VS_MENU_WINDOW" />
       </Group>
     </Groups>
 
     <!-- Canonical names give the keyboard-binding names: TabGroup.MoveToNext, TabGroup.FocusNext, ... -->
     <Buttons>
-      <Button guid="guidToggleTabGroupCmdSet" id="MoveToNextCommandId" priority="0x0100" type="Button">
-        <Parent guid="guidToggleTabGroupCmdSet" id="ToggleTabGroupMenuGroup" />
+      <Button guid="guidTabGroupHopCmdSet" id="MoveToNextCommandId" priority="0x0100" type="Button">
+        <Parent guid="guidTabGroupHopCmdSet" id="TabGroupHopMenuGroup" />
         <Strings>
           <ButtonText>Move to Next Tab Group (wrap)</ButtonText>
           <CanonicalName>.TabGroup.MoveToNext</CanonicalName>
@@ -22,8 +22,8 @@
         </Strings>
       </Button>
 
-      <Button guid="guidToggleTabGroupCmdSet" id="FocusNextCommandId" priority="0x0101" type="Button">
-        <Parent guid="guidToggleTabGroupCmdSet" id="ToggleTabGroupMenuGroup" />
+      <Button guid="guidTabGroupHopCmdSet" id="FocusNextCommandId" priority="0x0101" type="Button">
+        <Parent guid="guidTabGroupHopCmdSet" id="TabGroupHopMenuGroup" />
         <Strings>
           <ButtonText>Focus Next Tab Group (wrap)</ButtonText>
           <CanonicalName>.TabGroup.FocusNext</CanonicalName>
@@ -31,8 +31,8 @@
         </Strings>
       </Button>
 
-      <Button guid="guidToggleTabGroupCmdSet" id="DiagnosticsCommandId" priority="0x0102" type="Button">
-        <Parent guid="guidToggleTabGroupCmdSet" id="ToggleTabGroupMenuGroup" />
+      <Button guid="guidTabGroupHopCmdSet" id="DiagnosticsCommandId" priority="0x0102" type="Button">
+        <Parent guid="guidTabGroupHopCmdSet" id="TabGroupHopMenuGroup" />
         <Strings>
           <ButtonText>Tab Group Diagnostics</ButtonText>
           <CanonicalName>.TabGroup.Diagnostics</CanonicalName>
@@ -43,10 +43,10 @@
   </Commands>
 
   <Symbols>
-    <GuidSymbol name="guidToggleTabGroupPackage" value="{dfd18762-e92a-4c5c-9443-8a0264f3c867}" />
+    <GuidSymbol name="guidTabGroupHopPackage" value="{dfd18762-e92a-4c5c-9443-8a0264f3c867}" />
 
-    <GuidSymbol name="guidToggleTabGroupCmdSet" value="{188b3ead-ccd9-43c0-bd7d-a337cd2ad2ed}">
-      <IDSymbol name="ToggleTabGroupMenuGroup" value="0x1020" />
+    <GuidSymbol name="guidTabGroupHopCmdSet" value="{188b3ead-ccd9-43c0-bd7d-a337cd2ad2ed}">
+      <IDSymbol name="TabGroupHopMenuGroup" value="0x1020" />
       <IDSymbol name="MoveToNextCommandId" value="0x0100" />
       <IDSymbol name="FocusNextCommandId" value="0x0101" />
       <IDSymbol name="DiagnosticsCommandId" value="0x0102" />

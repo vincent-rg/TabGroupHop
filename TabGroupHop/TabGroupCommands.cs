@@ -6,7 +6,7 @@ using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
 using Task = System.Threading.Tasks.Task;
 
-namespace ToggleTabGroup
+namespace TabGroupHop
 {
     /// <summary>
     /// TabGroup.MoveToNext, TabGroup.FocusNext and TabGroup.Diagnostics.
@@ -54,7 +54,7 @@ namespace ToggleTabGroup
             {
                 ok = VsCommandRunner.TryExecute(VsCommandRunner.NewVerticalTabGroup);
                 if (!ok)
-                    SetStatusBarText("Toggle Tab Group: a new group needs at least two documents in the current group.");
+                    SetStatusBarText("Tab Group Hop: a new group needs at least two documents in the current group.");
             }
             else if (location.Index < location.Groups.Count - 1)
             {
@@ -79,7 +79,7 @@ namespace ToggleTabGroup
             frame.Show();
 
             if (!ok && location.Groups.Count > 1)
-                SetStatusBarText("Toggle Tab Group: the document could not be moved.");
+                SetStatusBarText("Tab Group Hop: the document could not be moved.");
         }
 
         /// <summary>
@@ -101,7 +101,7 @@ namespace ToggleTabGroup
             IVsWindowFrame target = FindFrame(tab);
             if (target == null)
             {
-                SetStatusBarText("Toggle Tab Group: no window found for the next group's tab.");
+                SetStatusBarText("Tab Group Hop: no window found for the next group's tab.");
                 return;
             }
 
@@ -137,7 +137,7 @@ namespace ToggleTabGroup
             VsShellUtilities.ShowMessageBox(
                 _package,
                 message,
-                "Toggle Tab Group — diagnostics",
+                "Tab Group Hop — diagnostics",
                 OLEMSGICON.OLEMSGICON_INFO,
                 OLEMSGBUTTON.OLEMSGBUTTON_OK,
                 OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST);
@@ -155,12 +155,12 @@ namespace ToggleTabGroup
             location = DocumentGroupLocation.Find(frame);
             if (location == null || location.Index < 0)
             {
-                SetStatusBarText("Toggle Tab Group: the active document is not in a tab group.");
+                SetStatusBarText("Tab Group Hop: the active document is not in a tab group.");
                 return false;
             }
             if (!location.IsInMainWindow)
             {
-                SetStatusBarText("Toggle Tab Group: floating windows are not supported.");
+                SetStatusBarText("Tab Group Hop: floating windows are not supported.");
                 return false;
             }
             return true;
@@ -233,7 +233,7 @@ namespace ToggleTabGroup
         }
 
         /// <summary>
-        /// Writes to a "Toggle Tab Group" pane of the Output window (copyable, unlike the message box).
+        /// Writes to a "Tab Group Hop" pane of the Output window (copyable, unlike the message box).
         /// </summary>
         private static void WriteToOutputPane(string text)
         {
@@ -245,7 +245,7 @@ namespace ToggleTabGroup
             Guid paneGuid = OutputPaneGuid;
             if (outputWindow.GetPane(ref paneGuid, out IVsOutputWindowPane pane) != VSConstants.S_OK || pane == null)
             {
-                outputWindow.CreatePane(ref paneGuid, "Toggle Tab Group", fInitVisible: 1, fClearWithSolution: 0);
+                outputWindow.CreatePane(ref paneGuid, "Tab Group Hop", fInitVisible: 1, fClearWithSolution: 0);
                 outputWindow.GetPane(ref paneGuid, out pane);
             }
             if (pane == null)

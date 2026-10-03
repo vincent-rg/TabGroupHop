@@ -6,7 +6,7 @@ using System.Reflection;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
 
-namespace ToggleTabGroup
+namespace TabGroupHop
 {
     /// <summary>
     /// Reflection access to the internal WPF window-management model
