@@ -63,18 +63,18 @@ namespace TabGroupHop
 
             LogState(label, frame);
 
-            _ = ThreadHelper.JoinableTaskFactory.StartOnIdle(() =>
+            ThreadHelper.JoinableTaskFactory.StartOnIdle(() =>
             {
                 ThreadHelper.ThrowIfNotOnUIThread();
-                LogState(label + " [idle]", frame);
-            });
+                LogStateSafe(label + " [idle]", frame);
+            }).FileAndForget("TabGroupHop/Tracer/LogOnIdle");
 
             var timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(300) };
             timer.Tick += (s, e) =>
             {
                 ThreadHelper.ThrowIfNotOnUIThread();
                 timer.Stop();
-                LogState(label + " [+300ms]", frame);
+                LogStateSafe(label + " [+300ms]", frame);
             };
             timer.Start();
         }
@@ -98,6 +98,21 @@ namespace TabGroupHop
 
             Log($"{label}: frame \"{Caption(frame)}\" in {where} | active window \"{Caption(activeFrame)}\" ({activeWhere})" +
                 $" | keyboard focus {Keyboard.FocusedElement?.GetType().Name ?? "null"}");
+        }
+
+        /// <summary>LogState for deferred callbacks, where an exception would otherwise be lost.</summary>
+        private static void LogStateSafe(string label, IVsWindowFrame frame)
+        {
+            ThreadHelper.ThrowIfNotOnUIThread();
+
+            try
+            {
+                LogState(label, frame);
+            }
+            catch (Exception ex)
+            {
+                OutputPane.WriteError("trace", ex);
+            }
         }
 
         public static string Caption(IVsWindowFrame frame)

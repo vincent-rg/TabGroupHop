@@ -51,13 +51,20 @@ namespace TabGroupHop
             Tracer.Log($"focus stolen by \"{Tracer.Caption(newFrame)}\", restoring \"{Tracer.Caption(frame)}\"");
 
             // Don't re-activate from inside the activation notification itself.
-            _ = ThreadHelper.JoinableTaskFactory.RunAsync(async () =>
+            ThreadHelper.JoinableTaskFactory.RunAsync(async () =>
             {
                 await Task.Yield();
                 await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
-                frame.Show();
-                Tracer.LogState("focus restored", frame);
-            });
+                try
+                {
+                    frame.Show();
+                    Tracer.LogState("focus restored", frame);
+                }
+                catch (Exception ex)
+                {
+                    OutputPane.WriteError("focus restore", ex);
+                }
+            }).FileAndForget("TabGroupHop/FocusGuard/RestoreFocus");
         }
 
         public void OnFrameCreated(IVsWindowFrame frame) { }

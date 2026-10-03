@@ -14,14 +14,12 @@ namespace TabGroupHop
     /// </summary>
     internal sealed class TabGroupCommands
     {
-        private readonly AsyncPackage _package;
         private readonly FocusGuard _focusGuard = new FocusGuard();
 
-        private TabGroupCommands(AsyncPackage package, OleMenuCommandService commandService, IVsUIShell7 shell)
+        private TabGroupCommands(OleMenuCommandService commandService, IVsUIShell7 shell)
         {
             ThreadHelper.ThrowIfNotOnUIThread();
 
-            _package = package;
             shell?.AdviseWindowFrameEvents(_focusGuard);
 
             commandService.AddCommand(new MenuCommand(MoveToNext, new CommandID(PackageGuids.CommandSet, PackageIds.MoveToNextCommand)));
@@ -40,7 +38,7 @@ namespace TabGroupHop
             var commandService = (OleMenuCommandService)await package.GetServiceAsync(typeof(IMenuCommandService));
             Assumes.Present(commandService);
             var shell = await package.GetServiceAsync(typeof(SVsUIShell)) as IVsUIShell7;
-            _ = new TabGroupCommands(package, commandService, shell);
+            _ = new TabGroupCommands(commandService, shell);
         }
 
         /// <summary>
@@ -161,14 +159,6 @@ namespace TabGroupHop
 
             OutputPane.Write($"===== {DateTime.Now:HH:mm:ss} ====={Environment.NewLine}{message}{Environment.NewLine}" +
                              $"--- All views (including hidden) ---{Environment.NewLine}{details}", activate: true);
-
-            VsShellUtilities.ShowMessageBox(
-                _package,
-                message,
-                "Tab Group Hop — diagnostics",
-                OLEMSGICON.OLEMSGICON_INFO,
-                OLEMSGBUTTON.OLEMSGBUTTON_OK,
-                OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST);
         }
 
         private static bool TryGetActiveDocument(out IVsWindowFrame frame, out DocumentGroupLocation location)

@@ -30,7 +30,32 @@ namespace TabGroupHop
 
             pane.OutputStringThreadSafe(text + Environment.NewLine);
             if (activate)
+            {
+                ShowOutputWindow();
                 pane.Activate();
+            }
+        }
+
+        /// <summary>
+        /// Reports an exception that would otherwise be lost (fire-and-forget work, timer callbacks).
+        /// </summary>
+        public static void WriteError(string context, Exception ex)
+        {
+            ThreadHelper.ThrowIfNotOnUIThread();
+            Write($"{DateTime.Now:HH:mm:ss.fff}  Tab Group Hop error ({context}): {ex}", activate: false);
+        }
+
+        /// <summary>Opens the Output tool window if it is closed (Activate only selects the pane).</summary>
+        private static void ShowOutputWindow()
+        {
+            ThreadHelper.ThrowIfNotOnUIThread();
+
+            if (!(Package.GetGlobalService(typeof(SVsUIShell)) is IVsUIShell shell))
+                return;
+
+            Guid outputWindowGuid = new Guid(ToolWindowGuids80.Outputwindow);
+            if (ErrorHandler.Succeeded(shell.FindToolWindow((uint)__VSFINDTOOLWIN.FTW_fForceCreate, ref outputWindowGuid, out IVsWindowFrame frame)))
+                frame?.ShowNoActivate();
         }
     }
 }
